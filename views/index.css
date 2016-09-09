@@ -1,0 +1,37 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
+body
+{
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.brand
+{
+    padding: 10px;
+    font-size: 20px;
+}
+
+table
+{
+    margin: 0 auto 15px;
+    border: 1px solid black;
+}
+
+table td
+{
+    height: 70px;
+    width: 70px;
+    border: 1px solid #000;
+}
+
+.black
+{
+    background-color: saddlebrown;
+}
+
+.white
+{
+    background-color: #fff;
+}

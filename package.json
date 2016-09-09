@@ -1,0 +1,19 @@
+{
+  "name": "schoolgame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "Nikit0s",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.3.5",
+    "express": "^4.13.4",
+    "hbs": "^4.0.0"
+  },
+  "engines": {
+    "node": "4.4.0"
+  }
+}
