@@ -4,8 +4,11 @@ var gameStarted = false;
 var white = [];
 var black = [];
 var steps = 0;
+var deskHistory = [];
+var showDeskHistory = false;
+var won = false;
 
-function xInputListener (e) {
+function xInputListener(e) {
     var width = parseInt(e.target.value);
     if (width) {
         if (width != currentX) {
@@ -15,13 +18,47 @@ function xInputListener (e) {
     }
 }
 
-function yInputListener (e) {
+function yInputListener(e) {
     var height = parseInt(e.target.value);
     if (height) {
         if (height != currentY) {
             currentY = height;
             drawTable(currentX, currentY);
         }
+    }
+}
+
+function tableFromConfig(config) {
+    var table = document.createElement('table');
+
+    var html = '';
+    for (var i = 0; i < currentY; i++){
+        html += '<tr>';
+        for (var j = 0; j < currentX; j++) {
+            var cell = i + '_' + j;
+            if (config.indexOf(cell) >= 0) {
+                html += '<td class="black">&nbsp;</td>';
+            } else {
+                html += '<td>&nbsp;</td>';
+            }
+        }
+        html += '</tr>'
+    }
+    table.innerHTML = html;
+    return table;
+}
+
+function showDeskHistoryTumblerListener(e) {
+    e.preventDefault();
+    showDeskHistory = !showDeskHistory;
+    var tumbler =   document.querySelector('#desk-history-show');
+    var tablesBlock = document.querySelector('.desk-history__tables');
+    if (showDeskHistory) {
+        tumbler.textContent = 'Скрыть историю';
+        tablesBlock.style.display = 'block';
+    } else {
+        tumbler.textContent = 'Показать историю';
+        tablesBlock.style.display = 'none';
     }
 }
 
@@ -60,6 +97,12 @@ function configureStart(x, y) {
     black.forEach(function (cell) {
         colorCell(cell, true);
     });
+
+    // Save to history and draw it in history block
+    deskHistory.push(black.slice());
+    var tablesBlock = document.querySelector('.desk-history__tables');
+    tablesBlock.appendChild(tableFromConfig(black));
+
 
     storeState();
 }
@@ -104,8 +147,18 @@ function activateDesk () {
     wrap.classList.add('form-group');
     wrap.classList.add('steps-count');
     wrap.classList.add('text-center');
-    wrap.textContent = 'Осталось ходов: ';
+    var innerWrap = document.createElement('div');
+    innerWrap.textContent = 'Осталось ходов: ';
+    wrap.appendChild(innerWrap);
+
+    innerWrap = document.createElement('div');
+    innerWrap.id = 'steps-count';
+    innerWrap.textContent = steps;
+    wrap.appendChild(innerWrap);
     field.parentNode.appendChild(wrap);
+
+    var deskHistoryBlock = document.querySelector('.desk-history');
+    deskHistoryBlock.style.display = 'block';
 }
 
 function documentLoaded() {
@@ -125,6 +178,9 @@ function documentLoaded() {
         e.preventDefault();
     });
 
+    var showDeskHistoryTumbler = document.getElementById('desk-history-show');
+    showDeskHistoryTumbler.addEventListener('click', showDeskHistoryTumblerListener);
+
     restoreState();
 }
 
@@ -135,6 +191,8 @@ function storeState() {
     Cookies.set('white', white);
     Cookies.set('black', black);
     Cookies.set('steps', steps);
+    Cookies.set('deskHistory', deskHistory);
+    Cookies.set('won', won);
 
 }
 
@@ -145,16 +203,17 @@ function restoreState() {
     if (Cookies.get('black')) {
         black = JSON.parse(Cookies.get('black'));
     }
+    if (Cookies.get('deskHistory')) {
+        deskHistory = JSON.parse(Cookies.get('deskHistory'));
+    }
     gameStarted = Cookies.get('gameStarted') === 'true';
     currentX = Number(Cookies.get('currentX')).valueOf() || 2;
     currentY = Number(Cookies.get('currentY')).valueOf() || 2;
     steps = Number(Cookies.get('steps')).valueOf() || currentX * currentY;
-    console.log(white);
-    console.log(black);
-    console.log('Game Started ' + gameStarted);
-    console.log(currentX);
-    console.log(currentY);
+    won = Cookies.get('won') === 'true';
+
     drawTable(currentX, currentY);
+
     if (gameStarted) {
         white.forEach(function (cell) {
             colorCell(cell, false);
@@ -162,6 +221,17 @@ function restoreState() {
         black.forEach(function (cell) {
             colorCell(cell, true);
         });
+
+        // Draw History
+        var tablesBlock = document.querySelector('.desk-history__tables');
+        deskHistory.forEach(function(configuration) {
+            tablesBlock.appendChild(tableFromConfig(configuration));
+        });
+
+        if (won) {
+            document.getElementById('won').style.display = 'block';
+        }
+
         activateDesk();
     } else {
         var btnStart = document.getElementById('start');
@@ -183,9 +253,8 @@ function drawTable(x, y) {
     field.innerHTML = html;
 }
 
-function cellClickHandler (e) {
-    console.log(steps);
-    if (e.target.id.indexOf('cell-') >= 0) {
+function cellClickHandler(e) {
+    if (!won && steps && e.target.id.indexOf('cell-') >= 0) {
         var id = e.target.id;
         var currentCell = id.substring(id.indexOf('-') + 1);
         var row = parseInt(currentCell.substring(0, currentCell.indexOf('_')));
@@ -216,11 +285,24 @@ function cellClickHandler (e) {
         });
 
         steps -= 1;
+        stepsBlock = document.querySelector('#steps-count');
+        stepsBlock.textContent = steps;
+
+        if ((black.length >= currentX * currentY) || (black.length === 0)) {
+            won = true;
+            document.getElementById('won').style.display = 'block';
+        }
+
+        deskHistory.push(black.slice());
+        var tablesBlock = document.querySelector('.desk-history__tables');
+        tablesBlock.appendChild(tableFromConfig(black.slice()));
+
+
         storeState();
     }
 }
 
-function reset (e) {
+function reset(e) {
 
     var x = document.getElementById('x');
     x.addEventListener('input', xInputListener);
@@ -229,6 +311,21 @@ function reset (e) {
 
     gameStarted = false;
     steps = 0;
+    deskHistory = [];
+    won = false;
+
+    var deskHistoryBlock = document.querySelector('.desk-history');
+    deskHistoryBlock.style.display = 'none';
+
+    // Убираем надпись "вы победили"
+    document.getElementById('won').style.display = 'none';
+
+    var tablesBlock = document.querySelector('.desk-history__tables');
+    tablesBlock.innerHTML = '';
+    var tablesBlock = document.querySelector('.desk-history__tables');
+    var tumbler =   document.querySelector('#desk-history-show');
+    tumbler.textContent = 'Показать историю';
+    tablesBlock.style.display = 'none';
 
     var row = document.getElementById('field').parentNode;
     var widthInput = document.getElementById('x');
@@ -242,7 +339,7 @@ function reset (e) {
     drawTable(currentX, currentY);
     var btnStart = document.getElementById('start');
     btnStart.removeEventListener('click', btnStartEventListener);
-    btnStart.addEventListener('click', btnStartEventListener)
+    btnStart.addEventListener('click', btnStartEventListener);
 
     storeState();
 }

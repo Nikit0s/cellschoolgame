@@ -35,3 +35,34 @@ table td
 {
     background-color: #fff;
 }
+
+.steps-count
+{
+    display: flex;
+    justify-content: center;
+}
+
+#steps-count
+{
+    margin: 0 0.5em;
+}
+
+.desk-history
+{
+    display: none;
+}
+
+#desk-history-show
+{
+    cursor: pointer;
+}
+
+.desk-history__tables
+{
+    display: none;
+}
+
+#won
+{
+    display: none;
+}
